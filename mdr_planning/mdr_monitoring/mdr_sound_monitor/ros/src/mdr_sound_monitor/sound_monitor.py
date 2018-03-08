@@ -2,9 +2,11 @@
 
 import pyaudio
 import wave
-import sys
 import yaml
 import rospy
+from std_msgs.msg import String
+
+from importlib import import_module
 
 class SoundMonitor:
     def __init__(self, config_file):
@@ -16,13 +18,21 @@ class SoundMonitor:
         self.audio_manager = pyaudio.PyAudio()
 
         for sound in self.sound_dictionary:
-            sound_file = self.sound_dictionary[sound]['folder']+'/'+ self.sound_dictionary[sound]['file_name'] 
+            sound_file = self.sound_dictionary[sound]['folder']+'/'+ self.sound_dictionary[sound]['file_name']
             rospy.Subscriber(self.sound_dictionary[sound]['topic'], rospy.AnyMsg, self.mainCB, sound_file)
 
         rospy.spin()
 
     def mainCB(self, msg, sound_file):
-        sound_file_path = self.common_path + 'willow-sound/'+ sound_file 
+        #From http://schulz-m.github.io/2016/07/18/rospy-subscribe-to-any-msg-type/
+        connection_header =  msg._connection_header['type'].split('/')
+        ros_pkg = connection_header[0] + '.msg'
+        msg_type = connection_header[1]
+        print 'Message type detected as ' + msg_type
+        msg_class = getattr(import_module(ros_pkg), msg_type)
+        new_msg = msg_class()
+        print new_msg
+        sound_file_path = self.common_path + 'willow-sound/'+ sound_file
         self.playSound(sound_file_path)
 
     def playSound(self,sound_file):
@@ -40,8 +50,3 @@ class SoundMonitor:
             # stop stream (4)
         stream.stop_stream()
         stream.close()
- 
-
-
-
-
