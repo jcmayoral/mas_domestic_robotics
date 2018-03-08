@@ -10,3 +10,7 @@ Stop:
   topic: /test2
   folder: E
   file_name: E02.wav
+Random:
+  topic: /test3
+  folder: M
+  file_name: MIDidIt.wav
