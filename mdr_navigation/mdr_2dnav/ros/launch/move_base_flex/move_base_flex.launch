@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="robot" default="$(optenv ROBOT !!ROBOT NOT SET!!)" />
+    <arg name="robot_env" default="brsu-c069" />
+    <arg name="robot_pkg" default="mas_cob_bringup" />
+
+    <!-- delete old parameters -->
+    <rosparam command="delete" param="/move_base"/>
+  
+    <arg name="map" default="$(find mcr_default_env_config)/$(arg robot_env)/map.yaml" />
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map)"/>
+
+    
+    <!-- particle filter localization -->
+    <include file="amcl.launch" />
+
+
+
+    <arg name="input_scans" default="[base_scan_0, base_scan_1]"/>
+    <arg name="output_scan" default="/scan_unified"/>
+  
+    <!-- delete old parameters -->
+    <rosparam command="delete" param="/move_base"/>
+  
+    <!-- run scan unifier -->
+    <node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier" output="log">
+        <rosparam subst_value="True" param="input_scans">$(arg input_scans)</rosparam>
+        <remap from="scan_unified" to="$(arg output_scan)"/>
+    </node>
+
+    <!-- move_base navigation -->
+    <node pkg="mbf_costmap_nav" type="mbf_costmap_nav" respawn="true" name="move_base_flex" output="screen">
+        <!-- Remap from cmd_vel to care-o-bot 3 base controller topics -->
+        <rosparam file="config/planners.yaml" command="load" />
+        <rosparam file="config/controllers.yaml" command="load" />
+        <rosparam file="config/recovery_behaviors.yaml" command="load" />
+        <rosparam file="config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+        <rosparam file="config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="config/global_costmap_params.yaml" command="load" />
+        <rosparam file="config/local_costmap_params.yaml" command="load" />
+  </node>
+</launch> 
+
